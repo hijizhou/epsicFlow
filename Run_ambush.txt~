@@ -1,0 +1,28 @@
+image1=./images/ambush_6_0004.png
+image2=./images/ambush_6_0005.png
+outputfile=output_ambush.flo
+start1=$SECONDS
+
+#Edge
+matlab -nodesktop -nojvm -r "warning off;addpath(genpath('./SED')); load('EpicFlow_v1.00/modelFinal.mat'); I = imread('"$image1"'); if size(I,3)==1, I = cat(3,I,I,I); end; edges = edgesDetect(I, model);fid=fopen('tmp/tmpEdge','wb'); fwrite(fid,transpose(edges),'single'); fclose(fid); exit"
+end1=$(( SECONDS - start1 ))
+
+start2=$SECONDS
+#Match
+cd ./deepmatching_1.0.2_c++/
+ 
+./deepmatching-static ../$image1 ../$image2 -png_settings -improved_settings -out ../tmp/tmpMatch
+end2=$(( SECONDS - start2 ))
+
+#Main
+start3=$SECONDS
+cd ../EpicFlow_v1.00
+
+./epicflow-static ../$image1 ../$image2 ../tmp/tmpEdge ../tmp/tmpMatch ../$outputfile
+
+end3=$(( SECONDS - start3 ))
+
+duration=$(( end1+end2 ))
+
+printf "Extracting SED edges: %s seconds.\n Deepmatching: %s seconds.\n EpicFlow: %s seconds.\n --Running time: %s seconds.--\n" $end1 $end2 $end3 $duration
+
